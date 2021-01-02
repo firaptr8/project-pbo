@@ -1,0 +1,175 @@
+import mysql.connector
+
+try :
+    con = mysql.connector.connect(
+        host = "localhost",
+        user = "root",
+        password = "",
+        database = "azure_books"
+    )
+    cursor = con.cursor()
+except mysql.connector.Error as e:
+    print("Gagal koneksi ke database: {}".format(e))
+
+class tokoBuku():
+    error = None
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+        tokoBuku.error = "Masukkan username dan password yang benar"
+    def login(self):
+        user = input("Masukkan username: ")
+        passwd = input("Masukkan password: ")
+        if (user == self.username and passwd == self.password):
+            print ("Login Sukses!")
+            pinjamBuku()
+        else:
+            print(tokoBuku.error)
+
+def daftarBuku():
+    cursor.execute("SELECT * FROM buku")
+    res = cursor.fetchall()
+    print("idBuku \t idPenulis \t idPenerbit \t judulBuku \t hargaBuku")
+    for x in res:
+        print(x[0],"\t",x[1],"\t \t",x[2],"\t",x[3],"\t",x[4])
+    
+
+def daftarPenulis():
+    cursor.execute("SELECT * FROM penulis")
+    res = cursor.fetchall()
+    print("idPenulis \t NamaPenulis \t Telepon \t Alamat")
+    for x in res:
+        print(x[0],"\t",x[1],"\t",x[2],"\t",x[3])
+
+def daftarPenerbit():
+    cursor.execute("SELECT * FROM penerbit")
+    res = cursor.fetchall()
+    print("idPenerbit \t NamaPenerbit \t Tahun \t Kota")
+    for x in res:
+        print(x[0],"\t",x[1],"\t",x[2],"\t",x[3])
+
+def daftarPeminjam():
+    cursor.execute("SELECT * FROM peminjam")
+    res = cursor.fetchall()
+    print("idPeminjam \t idMember \t Nama Depan \t Nama Belakang \t Telepon \t Alamat \t Kode Pos")
+    for x in res:
+        print(x[0],"\t",x[1],"\t",x[2],"\t",x[3],"\t",x[4], "\t",x[5], "\t", x[6])
+
+def daftarPeminjaman():
+    cursor.execute("SELECT * FROM peminjaman")
+    res = cursor.fetchall()
+    print("idPeminjaman \t idPeminjam \t idBuku \t Judul Buku \t Tanggal Pinjam \t Tanggal Kembali \t Denda")
+    for x in res:
+        print(x[0],"\t",x[1],"\t",x[2],"\t",x[3],"\t",x[4], "\t",x[5], "\t", x[6])
+
+def daftarPembeli():
+    cursor.execute("SELECT * FROM pembeli")
+    res = cursor.fetchall()
+    print("idPembeli \t Nama Depan \t Nama Belakang \t Telepon \t Alamat \t Kode Pos")
+    for x in res:
+        print(x[0],"\t",x[1],"\t",x[2],"\t",x[3],"\t",x[4], "\t",x[5])
+
+def daftarPembelian():
+    cursor.execute("SELECT * FROM pembelian")
+    res = cursor.fetchall()
+    print("idPembelian \t idPembeli \t idBuku \t Judul Buku \t Jumlah Buku \t Tanggal Beli \t Tanggal Kirim \t Stok \t Alamat")
+    for x in res:
+        print(x[0],"\t",x[1],"\t",x[2],"\t",x[3],"\t",x[4], "\t",x[5], "\t", x[6], "\t",x[7], "\t",x[8])
+
+def pinjamBuku():
+    cursor.execute("SELECT * FROM buku")
+    res = cursor.fetchall()
+    print("idBuku \t idPenulis \t idPenerbit \t judulBuku \t hargaBuku")
+    for x in res:
+        print(x[0],"\t",x[1],"\t",x[2],"\t",x[3],"\t",x[4])
+    
+    iduser = int(input("Masukkan id anda: "))
+    idBu = int(input("Masukkan no id buku yang ingin dipinjam: "))
+    
+    sql = "INSERT INTO Peminjaman (idPeminjam,idBuku) VALUES (%s,%s)"
+    val = (iduser,idBu)
+    cursor.execute(sql,val)
+    con.commit()
+    print("Buku berhasil dipinjam")
+        
+def beliBuku():
+    cursor.execute("SELECT * FROM buku")
+    res = cursor.fetchall()
+    print("idBuku \t idPenulis \t idPenerbit \t judulBuku \t hargaBuku")
+    for x in res:
+        print(x[0],"\t",x[1],"\t",x[2],"\t",x[3],"\t",x[4])
+    idBu = int(input("Masukkan no id buku yang ingin dibeli: "))
+    jumlah = int(input("Jumlah buku {} yang ingin dibeli: " .format(idBu)))
+    
+    sql = "INSERT INTO Pembelian (idBuku,Jumlah) VALUES (%s,%s)"
+    val = (idBu,jumlah)
+    cursor.execute(sql,val)
+    con.commit()
+    print("Buku berhasil dibeli")
+
+def kembalikanBuku():
+    tp = int(input("Masukkan tgl pinjam: "))
+    bp = int(input("Masukkan bulan pinjam: "))
+    thp = int(input("Masukkan tahun pinjam: "))
+    tgl = int(input("Masukkan tanggal kembali: "))
+    bln = int(input("Masukkan bulan kembali: "))
+    thn = int(input("Masukkan tahun kembali: "))
+    iduser = int(input("Masukkan id anda: "))
+
+    from datetime import date
+    d0 = date(thp, bp, tp)
+    d1 = date(thn, bln, tgl)
+    delta = d1 - d0 
+    if delta.days > 7:
+        denda = (delta.days * 500) - 3000
+    else:
+        denda = delta.days * 0
+    print("Denda : ", denda)
+
+    sql = "UPDATE Peminjaman SET TanggalPinjam = %s, TanggalKembali =%s, Denda = %s WHERE idPeminjam = %s"
+    val = (d0, d1, denda, iduser)
+    cursor.execute(sql,val)
+    con.commit()
+    print("Buku berhasil dipinjam")
+
+def menu():
+    print("Selamat Datang di Toko Azure Books")
+    print("MENU")
+    print("1. DAFTAR BUKU")
+    print("2. DAFTAR PENULIS")
+    print("3. DAFTAR PENERBIT")
+    print("4. DAFTAR PEMINJAM")
+    print("5. DAFTAR PEMINJAMAN")
+    print("6. DAFTAR PEMBELI")
+    print("7. DAFTAR PEMBELIAN")
+    print("8. PINJAM BUKU")
+    print("9. BELI BUKU")
+    print("10. KEMBALIKAN BUKU")
+    pilihan=int(input("Masukkan pilihan : "))
+    if pilihan==1:
+        daftarBuku()
+    elif pilihan==2:
+        daftarPenulis()
+    elif pilihan==3:
+        daftarPenerbit()
+    elif pilihan==4:
+        daftarPeminjam()
+    elif pilihan==5:
+        daftarPeminjaman()
+    elif pilihan==6:
+        daftarPembeli()
+    elif pilihan==7:
+        daftarPembelian()
+    elif pilihan==8:
+        log = tokoBuku("Clara4me", "Clara12")
+        log.login()
+    elif pilihan==9:
+        beliBuku()
+    elif pilihan==10:
+        kembalikanBuku()
+    else:
+        exit()
+
+if __name__ == "__main__":
+    while(True):
+        menu()
